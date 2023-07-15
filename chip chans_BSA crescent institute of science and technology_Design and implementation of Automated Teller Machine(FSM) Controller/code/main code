@@ -1,0 +1,691 @@
+module ATM_Controller ( clk,reset,card_inserted,key_pressed,amount,pin_code,face_recognised,next,disp_screen,disp_old_balance,disp_new_balance,transaction_complete,account_locked,disp_pincode );
+ 
+ //DECLARING INPUTS AND OUTPUTS
+ 
+  input clk;             // Clock signal
+  input reset;           // Reset signal
+  input card_inserted;   // Card inserted signal
+  input [2:0] key_pressed;//key pad pressed signal
+  input[1:0] pin_code; // pin entered by the user
+  input [3:0] amount;// withdraw or deposit amount
+  input face_recognised;//for withdraw process if money is greater than 10
+  input next;// next
+  output reg [3:0] disp_screen; // Display screen
+  output reg [3:0] disp_old_balance;//disply old balance
+  output reg [3:0] disp_new_balance; // Display new balance
+  output reg transaction_complete; // Transaction complete signal
+  output reg account_locked;//account locked for 24 hrs
+  output reg [1:0]disp_pincode;//to view the actual pin of the card
+ 
+//DECLARING THE STATES
+   
+    parameter IDLE=5'b00000;
+    parameter CARD_INSERTED=5'b00001;
+    parameter CARD_REMOVED=5'b00010;
+    parameter FIRST_PIN_TRY=5'b00011;
+    parameter SECOND_PIN_TRY=5'b00100;
+    parameter THIRD_PIN_TRY=5'b00101;
+parameter ACCOUNT_LOCKED=5'b01111;
+    parameter TRANSACTION_CHOICE=5'b00110;
+    parameter WITHDRAW=5'b00111;
+    parameter DEPOSIT=5'b01000;
+    parameter SHOW_BALANCE=5'b01001;
+parameter OTP=5'b01010;
+parameter FACIAL_RECOGNITION=5'b01011;
+parameter WARNING=5'b01100;
+parameter TRANSACTION_PROCESS=5'b01101;
+    parameter SHOW_MINI_STATEMENT=5'b01110;
+parameter PIN_CHANGE=5'b10000;
+parameter CONFRIM_PIN=5'b10010;
+parameter PIN_VALIDATION=5'b10001;
+
+ //INTERNAL REGISTERS
+
+  reg [4:0] current_state, next_state;
+  reg [3:0] balance;
+  initial balance=4'd15;
+  reg [3:0] old_balance;
+  reg [3:0] new_balance;
+  reg [1:0] password;
+  initial password=2'b01;
+  reg[4:0]time_up;
+  reg[1:0]new_pin;
+  reg[1:0]reenter_pin;
+
+
+  parameter LOCKOUT_TIME = 5'd24; // Account lockout time in clock cycles (24 hours)
+  
+  //sequential logic
+ 
+ always @(posedge clk or posedge reset)
+  begin
+    if (reset) begin
+      current_state <= IDLE;
+     
+    end
+    else begin
+      current_state <= next_state;
+    end
+  end
+ 
+ 
+  //combinational logic 
+ 
+  always @(*) begin
+    next_state = current_state;
+
+    case (current_state)
+      IDLE: begin
+       
+          next_state = CARD_INSERTED;
+end
+
+      CARD_INSERTED: begin
+        if (card_inserted==0) begin
+          next_state = CARD_REMOVED;
+        end
+  else  begin
+          next_state = FIRST_PIN_TRY;
+        end
+end
+
+      CARD_REMOVED: begin
+        next_state = IDLE;
+      end
+
+FIRST_PIN_TRY:begin
+if(pin_code==password)begin
+ next_state=TRANSACTION_CHOICE;
+ end
+ else begin
+ next_state=SECOND_PIN_TRY;
+ end
+end
+
+SECOND_PIN_TRY:begin
+if(pin_code==password)begin
+ next_state=TRANSACTION_CHOICE;
+ end
+ else begin
+ next_state=THIRD_PIN_TRY;
+ end
+end
+
+THIRD_PIN_TRY:begin
+if(pin_code==password)begin
+ next_state=TRANSACTION_CHOICE;
+ end
+ else begin
+ next_state=ACCOUNT_LOCKED;
+ end
+end
+
+ACCOUNT_LOCKED:begin
+ for(time_up=0;time_up<LOCKOUT_TIME;time_up=time_up+1)begin
+  next_state=ACCOUNT_LOCKED;
+  $display("account is locked for 24hrs");
+ end
+ next_state=IDLE;
+ end
+
+     
+      TRANSACTION_CHOICE: begin
+        if (key_pressed == 3'b001) begin // Withdraw
+          next_state = WITHDRAW;
+        end
+        else if (key_pressed == 3'b010) begin // Deposit
+          next_state = DEPOSIT;
+        end
+        else if (key_pressed == 3'b011) begin // Show balance
+          next_state = SHOW_BALANCE;
+        end
+ else if (key_pressed == 3'b111) begin // BACK
+          next_state = CARD_INSERTED;
+        end
+ else if(key_pressed == 3'b100)begin //PIN CHANGE
+   next_state = PIN_CHANGE;
+end
+else if(key_pressed == 3'b000)begin //NO KEY IS PRESSED
+   next_state = TRANSACTION_CHOICE;
+end
+      end
+
+      WITHDRAW: begin
+        if(amount>balance)begin
+  next_state=WARNING;
+end
+ else begin
+ if (key_pressed == 3'b111) begin
+          next_state = TRANSACTION_CHOICE;
+        end
+ else if(amount<4'd6)
+ begin
+        next_state = TRANSACTION_PROCESS;
+      end
+ else if(amount>4'd5 && amount<4'd11)
+ begin
+        next_state = OTP;
+      end
+ else if(amount>4'd10)
+ begin
+        next_state =FACIAL_RECOGNITION;
+      end
+end
+end
+
+      DEPOSIT: begin
+ if (key_pressed == 3'b111) begin
+          next_state = TRANSACTION_CHOICE;
+        end
+ else if (next)
+ begin
+        next_state = TRANSACTION_PROCESS;
+ end
+ else
+ begin
+ next_state=DEPOSIT;
+ end
+      end
+
+      SHOW_BALANCE: begin
+   if (key_pressed == 3'b111) begin
+          next_state = TRANSACTION_CHOICE;
+        end
+ else if(next)
+ begin
+        next_state = TRANSACTION_PROCESS;
+ end
+ else
+ begin
+ next_state=SHOW_BALANCE;
+ end
+      end
+
+
+      OTP: begin
+ if(key_pressed == 3'b111) begin
+next_state = TRANSACTION_CHOICE;
+end
+  else begin
+if( pin_code ==2'b10)begin
+        next_state = TRANSACTION_PROCESS;
+		  $display("OTP VERIFIED SUCCESSFULY");
+      end
+  else
+begin
+next_state=OTP;                                                                                               
+$display("OTP IS NOT VERIFIED");
+end
+end
+end
+
+      FACIAL_RECOGNITION: begin
+ if(key_pressed == 3'b111) begin
+next_state = TRANSACTION_CHOICE;
+end
+
+  else begin
+if(face_recognised)begin
+        next_state = TRANSACTION_PROCESS;
+		  $display("FACE VERIFIED SUCCESSFULLY");
+      end
+else
+begin
+next_state=FACIAL_RECOGNITION; 
+$display("FACE NOT VERIFIED.TRY AGAIN");
+end
+end
+end
+
+WARNING:
+begin
+ for(time_up=0;time_up<2;time_up=time_up+1)begin
+  $display("The amount you enterted is greater than your balance");
+end
+ next_state=TRANSACTION_CHOICE;
+ end
+ 
+PIN_CHANGE:
+ begin
+  if(next) begin
+   next_state=CONFRIM_PIN;
+end
+else begin
+next_state=PIN_CHANGE;
+end
+end
+
+
+CONFRIM_PIN:
+ begin
+  if(next) begin
+   next_state=PIN_VALIDATION;
+end
+else begin
+next_state=CONFRIM_PIN;
+end
+end
+
+PIN_VALIDATION:
+  begin
+   if(new_pin == reenter_pin)begin
+	$display("PIN IS SUCCESSFULLY CHANGED");
+ next_state=TRANSACTION_PROCESS;
+end
+else
+begin
+ next_state=PIN_CHANGE;
+ $display("NEW PIN DOES NOT MATCH.ENTER AGAIN");
+ end
+ end
+
+
+TRANSACTION_PROCESS: begin
+if(next) begin
+        next_state = SHOW_MINI_STATEMENT;
+      end
+else begin
+next_state=TRANSACTION_PROCESS;
+end
+end
+
+      SHOW_MINI_STATEMENT: begin
+if(next) begin
+        next_state =CARD_REMOVED;
+      end
+else begin
+ next_state=SHOW_MINI_STATEMENT;
+ end
+ end
+
+     
+
+
+      default: begin
+        next_state = IDLE;
+      end
+    endcase
+  end
+   
+ 
+ 
+  always @(posedge clk or posedge reset)
+  begin
+ 
+    case (current_state)
+ 
+ IDLE:
+begin
+      disp_screen <= 4'b0001;
+      disp_old_balance <= 0;
+disp_new_balance <= 0;
+      transaction_complete <= 0;
+      account_locked <= 0;
+      balance <=balance;
+password<=password;
+disp_pincode<=password;
+
+end
+CARD_INSERTED:
+begin
+      disp_screen <= 4'b0010;
+      disp_old_balance <= 0;
+disp_new_balance <= 0;
+      transaction_complete <= 0;
+      account_locked <= 0;
+      balance <= balance;
+password<=password;
+disp_pincode<=password;
+
+end
+
+CARD_REMOVED:
+begin
+      disp_screen <= 4'b0011;
+      disp_old_balance <= 0;
+disp_new_balance <= 0;
+      transaction_complete <= 0;
+      account_locked <= 0;
+      balance <= balance;
+  password<=password;
+  disp_pincode<=password;
+     
+end
+FIRST_PIN_TRY:
+begin
+      disp_screen <= 4'b0100;
+      disp_old_balance <= 0;
+disp_new_balance <= 0;
+      transaction_complete <= 0;
+      account_locked <= 0;
+      balance <=balance;
+password<=password;
+disp_pincode<=password;
+ 
+     
+end
+SECOND_PIN_TRY:
+begin
+         disp_screen <= 4'b0100;
+          disp_old_balance <= 0;
+ disp_new_balance <= 0;
+          transaction_complete <= 0;
+          account_locked <= 0;
+           balance <=balance;
+password<=password;
+disp_pincode<=password;
+           
+ end
+ THIRD_PIN_TRY:
+ begin
+        disp_screen <= 4'b0100;
+          disp_old_balance <= 0;
+disp_new_balance <= 0;
+          transaction_complete <= 0;
+          account_locked <= 1;
+           balance <=balance;
+ password<=password;
+ disp_pincode<=password;
+           
+ end
+ ACCOUNT_LOCKED:
+ begin
+          disp_screen <= 4'b0101;
+          disp_old_balance <= 0;
+disp_new_balance <= 0;
+          transaction_complete <= 0;
+          account_locked <= 1;
+           balance <=balance;
+ old_balance <= balance;
+ password<=password;
+ disp_pincode<=password;
+           
+ end
+ 
+TRANSACTION_CHOICE:
+ begin
+
+        if (key_pressed == 3'b001) begin // Withdraw
+   if(amount>balance)
+ begin
+ old_balance <= balance;
+            balance<=balance;
+           disp_screen <= 4'b0110;
+           disp_old_balance <= 0;
+ disp_new_balance <= 0;
+           transaction_complete <= 0;
+           account_locked <= 0;
+ password<=password;
+ disp_pincode<=password;
+
+          end
+   else
+begin
+ 
+    old_balance <= balance;
+           balance<=balance[3:0] - amount[3:0];
+           disp_screen <= 4'b0110;
+           disp_old_balance <= 0;
+ disp_new_balance <= 0;
+           transaction_complete <= 0;
+           account_locked <= 0;
+ password<=password;
+ disp_pincode<=password;
+end
+           
+        end
+        else if (key_pressed == 3'b010) begin // Deposit
+   old_balance <= balance;
+          balance <=balance[3:0] + amount[3:0];
+         disp_screen <= 4'b0110;
+          disp_old_balance <= 0;
+disp_new_balance <= 0;
+          transaction_complete <= 0;
+          account_locked <= 0;
+password<=password;
+disp_pincode<=password;
+         
+
+           
+        end
+        else if (key_pressed == 3'b011) begin // Show balance
+    old_balance <= balance;
+           balance <=balance;
+           disp_screen <= 4'b0110;
+           disp_old_balance <= 0;
+ disp_new_balance <= 0;
+           transaction_complete <= 0;
+           account_locked <= 0;
+ password<=password;
+ disp_pincode<=password;
+
+           
+        end
+   else if (key_pressed == 3'b100) begin
+ password<=pin_code[1:0];
+    old_balance <= balance;
+           balance <=balance;
+           disp_screen <= 4'b0110;
+           disp_old_balance <= 0;
+ disp_new_balance <= 0;
+           transaction_complete <= 0;
+           account_locked <= 0;
+			  disp_pincode<=password;
+
+           
+        end
+
+       
+end
+           
+WITHDRAW:
+begin
+ if(amount>balance)
+ begin
+  balance <=balance;
+        new_balance <=balance;
+       disp_screen <= 4'b0111;
+       disp_old_balance <=0 ;
+disp_new_balance <=0 ;
+       transaction_complete <= 0;
+       account_locked <= 0;
+password<=password;
+disp_pincode<=password;
+      end
+ else begin
+ if(amount<4'd6)
+ begin
+        balance <=balance;
+new_balance<=balance;
+       disp_screen <= 4'b0111;
+       disp_old_balance <=0 ;
+disp_new_balance <=0 ;
+       transaction_complete <= 0;
+       account_locked <= 0;
+password<=password;
+disp_pincode<=password;
+      end
+ else if(amount>4'd5 && amount<4'd11)
+ begin
+  balance <=balance;
+        new_balance <=balance;
+       disp_screen<= 4'b0111;
+       disp_old_balance <=0 ;
+disp_new_balance <=0 ;
+       transaction_complete <= 0;
+       account_locked <= 0;
+password <=password;
+disp_pincode<=password;
+      end
+else if(amount>4'd10)
+ begin
+  balance <=balance;
+        new_balance <=balance;
+       disp_screen<= 4'b0111;
+       disp_old_balance <=0 ;
+disp_new_balance <=0 ;
+       transaction_complete <= 0;
+       account_locked <= 0;
+password <=password;
+disp_pincode<=password;
+end
+      
+end
+   
+end
+DEPOSIT: begin
+       
+ balance <= balance;
+ new_balance <=balance;
+   disp_screen <= 4'b1000;
+    disp_old_balance <=0 ;
+    transaction_complete <= 0;
+    account_locked <= 0;
+password <=password;
+disp_pincode<=password;
+ 
+end
+SHOW_BALANCE: begin
+    balance <=balance;
+new_balance <=balance;
+        disp_screen <= 4'b1001;
+        disp_old_balance <= 0;
+ disp_new_balance <= 0;
+      transaction_complete <= 0;
+          account_locked <= 0;
+password<=password;
+disp_pincode<=password;
+ 
+end
+TRANSACTION_PROCESS: begin
+       password<=password;
+       new_pin<=new_pin;
+         balance <=balance;
+    new_balance <=balance;
+        transaction_complete <=1;
+       disp_screen <= 4'b0011;
+        disp_old_balance <= 0;
+ disp_new_balance <= 0;
+        account_locked <= 0;
+		  disp_pincode<=password;
+
+ 
+end
+OTP:begin
+ balance <=balance;
+ new_balance <=balance;
+ transaction_complete <=0;
+  disp_screen <= 4'b1010;
+  disp_old_balance <= 0;
+  disp_new_balance <= 0;
+  account_locked <= 0;
+  disp_pincode<=password;
+ 
+  end
+SHOW_MINI_STATEMENT:begin
+ balance <=balance;
+ new_balance <=balance;
+ transaction_complete <=1;
+  disp_screen <= 4'b0000;
+  disp_old_balance <= old_balance;
+   disp_new_balance <= new_balance;
+password<=password;
+new_pin<=new_pin;
+disp_pincode<=password;
+end
+
+FACIAL_RECOGNITION:begin
+ balance <=balance;
+ new_balance <=balance;
+ transaction_complete <=0;
+  disp_screen <= 4'b1011;
+  disp_old_balance <= 0;
+   disp_new_balance <=0;
+    account_locked <= 0;
+	 disp_pincode<=password;
+
+     
+end
+WARNING:begin
+ balance <=balance;
+ new_balance <=balance;
+ transaction_complete <=0;
+  disp_screen <= 4'b1100;
+  disp_old_balance <= 0;
+   disp_new_balance <=0;
+    account_locked <= 0;
+	 disp_pincode<=password;
+
+       
+  end
+ 
+PIN_CHANGE:begin
+ password<=password;
+ new_pin<=password[1:0];
+ balance <=balance;
+ new_balance <=balance;
+ transaction_complete <=0;
+  disp_screen <= 4'b1101;
+  disp_old_balance <= 0;
+   disp_new_balance <=0;
+account_locked <= 0;
+   password<=new_pin;
+	disp_pincode<=password;
+
+       
+  end
+ 
+ CONFRIM_PIN:begin
+ password<=password;
+ new_pin<=new_pin;
+ reenter_pin<=pin_code[1:0];
+ balance <=balance;
+ new_balance <=balance;
+ transaction_complete <=0;
+  disp_screen <= 4'b1110;
+  disp_old_balance <= 0;
+   disp_new_balance <=0;
+   account_locked <= 0;
+password<=new_pin;
+disp_pincode<=password;
+
+       
+  end
+ 
+PIN_VALIDATION:begin
+password<=password;
+  new_pin<=new_pin;
+ reenter_pin<=reenter_pin;
+  balance <=balance;
+ new_balance <=balance;
+ transaction_complete <=0;
+  disp_screen <= 4'b1111;
+  disp_old_balance <= 0;
+   disp_new_balance <=0;
+  account_locked <= 0;
+password<=new_pin;
+disp_pincode<=password;
+
+       
+  end
+
+ 
+default: begin
+       balance <=balance;
+       disp_screen <= 4'b0000;
+          disp_old_balance <= 0;
+disp_new_balance <= 0;
+          transaction_complete <= 0;
+          account_locked <= 0;
+           balance <= balance;
+			  disp_pincode<=password;
+
+           
+      end
+    endcase
+ end
+
+ 
+ endmodule
+
+
