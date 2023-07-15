@@ -1,0 +1,144 @@
+module ATM_Controller_tb();
+  
+  reg clk;
+  reg reset;
+  reg card_inserted;
+  reg [2:0] key_pressed;
+  reg [1:0] pin_code;
+  reg [3:0] amount;
+  reg face_recognised;
+  reg next;
+  wire [3:0] disp_screen;
+  wire [3:0] disp_old_balance;
+  wire [3:0] disp_new_balance;
+  wire transaction_complete;
+  wire account_locked;
+  wire [1:0]disp_pincode;
+  
+  ATM_Controller dut (
+    .clk(clk),
+    .reset(reset),
+    .card_inserted(card_inserted),
+    .key_pressed(key_pressed),
+	 .pin_code(pin_code),
+	 .amount(amount),
+	 .face_recognised(face_recognised),
+	  .next(next),
+    .disp_screen(disp_screen),
+    .disp_old_balance(disp_old_balance),
+	 .disp_new_balance(disp_new_balance),
+    .transaction_complete(transaction_complete),
+    .account_locked(account_locked),
+	 .disp_pincode(disp_pincode)
+  );
+  
+  initial
+  begin
+    clk = 0;
+    reset = 1;
+    card_inserted = 0;
+    key_pressed = 3'b000;
+	 pin_code=2'b11;
+	 
+	  
+	  //Withdraw process for amount greater than 5 and less than 11
+   
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd7;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd7;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd7;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd7;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd7;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd7;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd7;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd7;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd7;key_pressed=3'b001;face_recognised=1;next=1;
+	 
+	 
+	 
+	  //PIN CHANGE
+   
+	#10 reset = 0;card_inserted = 1; pin_code=2'b01;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b01;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b01;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	
+	  //withdraw  PROCESS with amount less than 6
+   
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b001;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b001;face_recognised=1;next=1;
+	 
+	
+	//deposit process
+   
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b010;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b010;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b010;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b010;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b010;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b010;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b010;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b010;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b010;face_recognised=1;next=1;
+	 
+	   //SHOW BALANCE	
+   
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd11;key_pressed=3'b011;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd11;key_pressed=3'b011;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd11;key_pressed=3'b011;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd11;key_pressed=3'b011;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd11;key_pressed=3'b011;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd11;key_pressed=3'b011;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd11;key_pressed=3'b011;face_recognised=1;next=1;
+	 #10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd11;key_pressed=3'b011;face_recognised=1;next=1;
+	
+	 
+	 
+	 
+	 
+	 
+	   //PIN CHANGE with confrim pin not natching
+   
+	#10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b11;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b01;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b10;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b01;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b01;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	#10 reset = 0;card_inserted = 1; pin_code=2'b01;amount=4'd2;key_pressed=3'b100;face_recognised=1;next=1;
+	
+	 
+	
+	
+  end
+  
+  initial
+  begin
+  forever
+    #5 clk = ~clk;
+  end
+  
+  
+  initial
+  
+  $monitor($time, "reset=%b,clk=%b,card_inserted=%b,key_pressed=%b,pin_code=%b,disp_pincode=%b,amount=%d,disp_screen=%b,disp_old_balance=%d,disp_new_balance=%d,transaction_complete=%b,account_locked=%b",reset,clk,card_inserted,key_pressed,pin_code,disp_pincode,amount,disp_screen,disp_old_balance,disp_new_balance,transaction_complete,account_locked);
+  
+  initial
+  begin
+  #380;
+  $finish();
+  end
+endmodule
