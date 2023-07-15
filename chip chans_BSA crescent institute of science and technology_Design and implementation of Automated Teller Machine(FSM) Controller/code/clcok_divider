@@ -1,0 +1,17 @@
+module Clock_Divider (
+    input wire clk_in,     // Input clock
+    output wire clk_out     // Output clock (divided)
+);
+  reg [25:0] count;
+  wire clk_div;
+
+  assign clk_out = clk_div;
+
+  always @(posedge clk_in) begin
+    count <= count + 1;
+    if (count == 25_000_000/2 - 1) // Divide the clock by 2
+      count <= 0;
+  end
+
+  assign clk_div = count == 25_000_000/2 - 1; // Output the divided clock
+endmodule
